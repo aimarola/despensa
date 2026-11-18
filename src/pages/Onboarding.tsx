@@ -1,3 +1,4 @@
+import { Home } from 'lucide-react'
 import { useState } from 'react'
 import { errorText, supabase } from '../lib/supabase'
 import { useAuth } from '../store'
@@ -35,9 +36,11 @@ export default function Onboarding() {
 
   return (
     <div className="auth">
-      <div className="auth-logo">🏠</div>
-      <h1>¡Bienvenido!</h1>
-      <p className="muted">Crea la familia o únete a la de otro con su código.</p>
+      <div className="auth-hero">
+        <div className="mark"><Home size={32} /></div>
+        <h1>¡Bienvenido!</h1>
+        <p className="muted" style={{ margin: 0 }}>Crea la familia o únete a la de otro con su código.</p>
+      </div>
 
       <div className="segmented">
         <button className={mode === 'create' ? 'active' : ''} onClick={() => setMode('create')}>Crear familia</button>

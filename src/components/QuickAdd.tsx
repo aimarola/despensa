@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { normalize } from '../lib/format'
 import type { Product } from '../lib/types'
@@ -72,20 +73,20 @@ export default function QuickAdd({ placeholder = 'Apuntar lo que falta…', onPi
           {suggestions.map((p) => (
             <li key={p.id}>
               <button onMouseDown={(e) => e.preventDefault()} onClick={() => pick(p)}>
-                <ProductImage product={p} size={36} />
+                <ProductImage product={p} size={40} />
                 <span className="grow">
                   {p.name}
                   {p.brand && <small> · {p.brand}</small>}
                 </span>
                 {badge?.(p) && <span className="badge">{badge(p)}</span>}
-                <span className="plus">＋</span>
+                <Plus className="plus" size={22} />
               </button>
             </li>
           ))}
           {q.trim() && !exact && (
             <li>
               <button className="create" onMouseDown={(e) => e.preventDefault()} onClick={() => { onCreate(q.trim()); setQ('') }}>
-                <span className="thumb thumb-letter" style={{ width: 36, height: 36, minWidth: 36, background: 'var(--accent)' }}>＋</span>
+                <span className="thumb thumb-letter" style={{ width: 40, height: 40, minWidth: 40, background: 'var(--green)', color: '#fff' }}><Plus size={22} /></span>
                 <span className="grow">Crear «{q.trim()}»</span>
               </button>
             </li>

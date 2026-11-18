@@ -24,8 +24,18 @@ export interface Product {
   brand: string | null
   barcode: string | null
   image_url: string | null
+  category: string
+  ref_price: number | null
   created_at: string
   product_supermarkets?: { supermarket_id: string }[]
+}
+
+export interface ProductPrice {
+  product_id: string
+  supermarket_id: string
+  price: number
+  source: 'manual' | 'compra' | 'openprices'
+  updated_at: string
 }
 
 export interface ListItem {
@@ -55,6 +65,9 @@ export interface Trip {
   done_by: string | null
   done_at: string
   item_count: number
+  shoppers: string[]
+  total_amount: number | null
+  estimated_total: number | null
 }
 
 export interface Purchase {
@@ -62,5 +75,6 @@ export interface Purchase {
   trip_id: string
   product_id: string
   quantity: number
+  unit_price: number | null
   purchased_at: string
 }

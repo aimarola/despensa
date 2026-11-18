@@ -1,5 +1,6 @@
+import { ChevronRight, LogOut, Plus, Share2 } from 'lucide-react'
 import { useState } from 'react'
-import { Sheet } from '../components/ui'
+import { Avatar, Sheet } from '../components/ui'
 import { errorText, supabase } from '../lib/supabase'
 import type { Supermarket } from '../lib/types'
 import { useAuth, useData, useToast } from '../store'
@@ -60,12 +61,12 @@ export default function SettingsPage() {
           {supermarkets.map((s) => (
             <li key={s.id}>
               <button className="row-btn" onClick={() => setEditing(s)}>
-                <span className="dot" style={{ background: s.color }} /> <span className="grow">{s.name}</span> ›
+                <span className="swatch-dot" style={{ background: s.color }} /> <span className="grow">{s.name}</span> <ChevronRight size={18} className="muted" />
               </button>
             </li>
           ))}
         </ul>
-        <button className="btn" onClick={() => setEditing({ name: '', color: COLORS[supermarkets.length % COLORS.length] })}>＋ Añadir supermercado</button>
+        <button className="btn" onClick={() => setEditing({ name: '', color: COLORS[supermarkets.length % COLORS.length] })}><Plus size={18} /> Añadir supermercado</button>
       </section>
 
       <section className="card">
@@ -82,7 +83,7 @@ export default function SettingsPage() {
         <p className="muted small">Código para que se unan otros miembros:</p>
         <div className="invite">
           <span className="code">{household?.invite_code}</span>
-          <button className="btn primary" onClick={share}>Invitar</button>
+          <button className="btn primary" onClick={share}><Share2 size={18} /> Invitar</button>
         </div>
         <button className="link small" onClick={async () => {
           if (!confirm('¿Generar un código nuevo? El anterior dejará de funcionar.')) return
@@ -92,7 +93,7 @@ export default function SettingsPage() {
 
         <h4>Miembros</h4>
         <ul className="plain">
-          {members.map((m) => <li key={m.user_id}>👤 {m.display_name}{m.user_id === me?.user_id ? ' (tú)' : ''}</li>)}
+          {members.map((m) => <li key={m.user_id}><Avatar name={m.display_name} /> {m.display_name}{m.user_id === me?.user_id ? ' (tú)' : ''}</li>)}
         </ul>
       </section>
 
@@ -110,7 +111,7 @@ export default function SettingsPage() {
               }}>Guardar</button>
           </div>
         </label>
-        <button className="btn ghost big" onClick={() => supabase.auth.signOut()}>Cerrar sesión</button>
+        <button className="btn ghost big" onClick={() => supabase.auth.signOut()}><LogOut size={18} /> Cerrar sesión</button>
         <button className="btn ghost danger" onClick={async () => {
           if (!confirm('¿Salir de esta familia? Dejarás de ver su lista.')) return
           const { error } = await supabase.from('members').delete().eq('household_id', household!.id).eq('user_id', me!.user_id)

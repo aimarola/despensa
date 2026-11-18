@@ -1,3 +1,4 @@
+import { ClipboardList, Package, Receipt, Settings, ShoppingCart } from 'lucide-react'
 import { HashRouter, Navigate, NavLink, Outlet, Route, Routes } from 'react-router-dom'
 import { Spinner } from './components/ui'
 import { isConfigured } from './lib/supabase'
@@ -16,11 +17,11 @@ function TabBar() {
   const { list } = useData()
   return (
     <nav className="tabbar">
-      <NavLink to="/" end><span>📝</span>Lista{list.length > 0 && <i className="dot-count">{list.length}</i>}</NavLink>
-      <NavLink to="/productos"><span>📦</span>Productos</NavLink>
-      <NavLink to="/comprar" className="tab-main"><span>🛒</span>Comprar</NavLink>
-      <NavLink to="/historial"><span>🧾</span>Historial</NavLink>
-      <NavLink to="/ajustes"><span>⚙️</span>Ajustes</NavLink>
+      <NavLink to="/" end><ClipboardList size={24} />Lista{list.length > 0 && <i className="dot-count">{list.length}</i>}</NavLink>
+      <NavLink to="/productos"><Package size={24} />Productos</NavLink>
+      <NavLink to="/comprar" className="tab-main"><span className="fab"><ShoppingCart size={26} /></span>Comprar</NavLink>
+      <NavLink to="/historial"><Receipt size={24} />Historial</NavLink>
+      <NavLink to="/ajustes"><Settings size={24} />Ajustes</NavLink>
     </nav>
   )
 }
@@ -62,7 +63,7 @@ function Gate() {
 function NotConfigured() {
   return (
     <div className="auth">
-      <div className="auth-logo">⚙️</div>
+      <div className="auth-hero"><div className="mark"><Settings size={30} /></div></div>
       <h1>Falta configurar</h1>
       <p className="muted">
         Crea el archivo <code>.env</code> con <code>VITE_SUPABASE_URL</code> y <code>VITE_SUPABASE_ANON_KEY</code>

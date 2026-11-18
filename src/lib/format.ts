@@ -24,3 +24,18 @@ export function formatDateTime(iso: string): string {
 export function normalize(s: string): string {
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
 }
+
+const eur = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' })
+export function euro(n: number | null | undefined): string {
+  return n == null || Number.isNaN(n) ? '—' : eur.format(n)
+}
+
+/** Acepta "1,35", "1.35", "1,35 €" */
+export function parsePrice(s: string): number | null {
+  const v = parseFloat(s.replace(/[^0-9,.-]/g, '').replace(',', '.'))
+  return Number.isFinite(v) && v >= 0 ? Math.round(v * 100) / 100 : null
+}
+
+export function firstName(s: string): string {
+  return s.trim().split(/\s+/)[0] ?? s
+}

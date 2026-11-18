@@ -1,26 +1,55 @@
+import { Camera, ImageIcon, Minus, Plus, ScanBarcode, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { CATEGORIES, categoryOf } from '../lib/categories'
+import { euro } from '../lib/format'
 import type { Product, Supermarket } from '../lib/types'
 
-const PALETTE = ['#e8590c', '#2f9e44', '#1971c2', '#9c36b5', '#c2255c', '#0c8599', '#f08c00', '#5c940d']
-function colorFor(text: string) {
+const AVATAR_COLORS = ['#0e7c5a', '#c44536', '#2d7fb8', '#7a4e2d', '#6c63c7', '#cf6fae', '#e07a2f', '#3f9b4f']
+export function colorFor(text: string) {
   let h = 0
   for (const ch of text) h = (h * 31 + ch.charCodeAt(0)) | 0
-  return PALETTE[Math.abs(h) % PALETTE.length]
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
 }
 
-/** Miniatura del producto; si no hay foto, muestra la inicial */
-export function ProductImage({ product, size = 52 }: { product: Pick<Product, 'name' | 'image_url'> | undefined; size?: number }) {
+/** Miniatura: la foto del producto o, si no hay, el icono de su categoría */
+export function ProductImage({ product, size = 54 }: { product: Pick<Product, 'name' | 'image_url'> & { category?: string } | undefined; size?: number }) {
   const [failed, setFailed] = useState(false)
-  const name = product?.name ?? '?'
   const style = { width: size, height: size, minWidth: size }
   if (product?.image_url && !failed) {
     return <img className="thumb" style={style} src={product.image_url} alt="" loading="lazy" onError={() => setFailed(true)} />
   }
+  const cat = categoryOf(product?.category)
+  if (cat.id !== 'otros') {
+    return (
+      <div className="thumb thumb-letter" style={{ ...style, background: `color-mix(in srgb, ${cat.color} 16%, var(--card))`, fontSize: size * 0.5 }}>
+        {cat.emoji}
+      </div>
+    )
+  }
+  const name = product?.name ?? '?'
   return (
-    <div className="thumb thumb-letter" style={{ ...style, background: colorFor(name), fontSize: size * 0.42 }}>
+    <div className="thumb thumb-letter" style={{ ...style, background: colorFor(name), color: '#fff', fontSize: size * 0.42 }}>
       {name.trim().charAt(0).toUpperCase()}
     </div>
   )
+}
+
+export function Avatar({ name, size }: { name: string; size?: number }) {
+  return (
+    <span className="avatar" style={{ background: colorFor(name), ...(size ? { width: size, height: size } : {}) }} title={name}>
+      {name.trim().charAt(0).toUpperCase()}
+    </span>
+  )
+}
+
+/** Etiqueta amarilla de precio, como las de la estantería */
+export function PriceTag({ value, approx, big, onClick }: { value: number | null | undefined; approx?: boolean; big?: boolean; onClick?: () => void }) {
+  const cls = `price-tag ${big ? 'big' : ''} ${value == null ? 'ghost' : approx ? 'approx' : ''}`
+  const content = value == null ? '+ precio' : euro(value)
+  if (onClick) {
+    return <button type="button" className={cls} onClick={(e) => { e.stopPropagation(); onClick() }}>{content}</button>
+  }
+  return value == null ? null : <span className={cls}>{content}</span>
 }
 
 export function SupermarketChips({
@@ -39,12 +68,8 @@ export function SupermarketChips({
         {allLabel}{counts ? <b>{counts.get(null) ?? 0}</b> : null}
       </button>
       {supermarkets.map((s) => (
-        <button
-          key={s.id}
-          className={`chip ${value === s.id ? 'active' : ''}`}
-          style={value === s.id ? { background: s.color, borderColor: s.color } : { borderColor: s.color }}
-          onClick={() => onChange(s.id)}
-        >
+        <button key={s.id} className={`chip ${value === s.id ? 'active' : ''}`} onClick={() => onChange(s.id)}>
+          <span className="dot" style={{ background: s.color }} />
           {s.name}{counts ? <b>{counts.get(s.id) ?? 0}</b> : null}
         </button>
       ))}
@@ -52,12 +77,43 @@ export function SupermarketChips({
   )
 }
 
+/** Selector visual de categoría (rejilla de iconos) */
+export function CategoryPicker({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+  return (
+    <div className="cat-grid">
+      {CATEGORIES.map((c) => (
+        <button
+          type="button" key={c.id}
+          className={`cat-tile ${value === c.id ? 'on' : ''}`}
+          onClick={() => onChange(c.id)}
+          aria-pressed={value === c.id}
+        >
+          <span className="emo">{c.emoji}</span>
+          <span>{c.name}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+export function GroupHead({ categoryId, count, extra }: { categoryId: string; count?: number; extra?: ReactNode }) {
+  const c = categoryOf(categoryId)
+  return (
+    <div className="group-head">
+      <span className="bubble" style={{ background: `color-mix(in srgb, ${c.color} 18%, var(--card))` }}>{c.emoji}</span>
+      <h3>{c.name}</h3>
+      {extra}
+      {count != null && <span className="count">{count}</span>}
+    </div>
+  )
+}
+
 export function Stepper({ value, onChange, min = 1 }: { value: number; onChange: (n: number) => void; min?: number }) {
   return (
     <div className="stepper" onClick={(e) => e.stopPropagation()}>
-      <button aria-label="Menos" onClick={() => onChange(Math.max(min, value - 1))} disabled={value <= min}>−</button>
+      <button type="button" aria-label="Menos" onClick={() => onChange(Math.max(min, value - 1))} disabled={value <= min}><Minus size={18} strokeWidth={2.6} /></button>
       <span>{value}</span>
-      <button aria-label="Más" onClick={() => onChange(value + 1)}>+</button>
+      <button type="button" aria-label="Más" onClick={() => onChange(value + 1)}><Plus size={18} strokeWidth={2.6} /></button>
     </div>
   )
 }
@@ -94,15 +150,15 @@ export function PhotoPicker({ preview, onFile, onClear }: { preview: string | nu
   }
   return (
     <div className="photo-picker">
-      <div className="photo-preview" onClick={() => cameraRef.current?.click()}>
+      <button type="button" className="photo-preview" onClick={() => cameraRef.current?.click()} aria-label="Hacer foto">
         {preview && broken !== preview
           ? <img src={preview} alt="Foto del producto" onError={() => setBroken(preview)} />
-          : <span>📷<br />{preview ? 'Foto no disponible' : 'Sin foto'}</span>}
-      </div>
+          : <span><Camera size={28} /><br />{preview ? 'Foto no disponible' : 'Añadir foto'}</span>}
+      </button>
       <div className="photo-actions">
-        <button type="button" className="btn" onClick={() => cameraRef.current?.click()}>📷 Hacer foto</button>
-        <button type="button" className="btn ghost" onClick={() => galleryRef.current?.click()}>🖼️ Galería</button>
-        {preview && <button type="button" className="btn ghost danger" onClick={onClear}>Quitar foto</button>}
+        <button type="button" className="btn" onClick={() => cameraRef.current?.click()}><Camera size={18} /> Hacer foto</button>
+        <button type="button" className="btn ghost" onClick={() => galleryRef.current?.click()}><ImageIcon size={18} /> Galería</button>
+        {preview && <button type="button" className="btn ghost danger small" onClick={onClear}><Trash2 size={16} /> Quitar foto</button>}
       </div>
       <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={pick} />
       <input ref={galleryRef} type="file" accept="image/*" hidden onChange={pick} />
@@ -125,9 +181,5 @@ export function Spinner() {
 }
 
 export function ScanIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8" />
-            </svg>
-  )
+  return <ScanBarcode size={24} strokeWidth={2.2} />
 }

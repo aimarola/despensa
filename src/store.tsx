@@ -1,28 +1,38 @@
 import type { Session } from '@supabase/supabase-js'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { supabase } from './lib/supabase'
-import type { Household, ListItem, Member, Product, ProductStats, Supermarket } from './lib/types'
+import type { Household, ListItem, Member, Product, ProductPrice, ProductStats, Supermarket } from './lib/types'
 
 // ---------------------------------------------------------------------------
 // Avisos breves (toasts)
 // ---------------------------------------------------------------------------
-interface Toast { id: number; text: string; kind: 'ok' | 'error' }
-const ToastCtx = createContext<(text: string, kind?: 'ok' | 'error') => void>(() => {})
+interface ToastAction { label: string; onClick: () => void }
+interface Toast { id: number; text: string; kind: 'ok' | 'error'; action?: ToastAction }
+type ShowToast = (text: string, kind?: 'ok' | 'error', action?: ToastAction) => void
+const ToastCtx = createContext<ShowToast>(() => {})
 export const useToast = () => useContext(ToastCtx)
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
-  const show = useCallback((text: string, kind: 'ok' | 'error' = 'ok') => {
+  const show = useCallback<ShowToast>((text, kind = 'ok', action) => {
     const id = Date.now() + Math.random()
-    setToasts((t) => [...t, { id, text, kind }])
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), kind === 'error' ? 4500 : 2500)
+    // Solo un aviso a la vez: al marcar productos seguidos no se apilan
+    setToasts([{ id, text, kind, action }])
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), kind === 'error' ? 4500 : action ? 4000 : 2200)
   }, [])
   return (
     <ToastCtx.Provider value={show}>
       {children}
       <div className="toasts" aria-live="polite">
         {toasts.map((t) => (
-          <div key={t.id} className={`toast toast-${t.kind}`}>{t.text}</div>
+          <div key={t.id} className={`toast toast-${t.kind}`}>
+            <span>{t.text}</span>
+            {t.action && (
+              <button onClick={() => { t.action!.onClick(); setToasts((x) => x.filter((y) => y.id !== t.id)) }}>
+                {t.action.label}
+              </button>
+            )}
+          </div>
         ))}
       </div>
     </ToastCtx.Provider>
@@ -106,8 +116,13 @@ interface DataState {
   memberName: (userId: string | null) => string
   list: ListItem[]
   stats: Map<string, ProductStats>
+  /** Precio conocido de un producto en un supermercado (o el más reciente en cualquiera) */
+  priceOf: (productId: string, supermarketId: string | null) => PriceInfo | null
+  pricesOf: (productId: string) => ProductPrice[]
   refresh: () => Promise<void>
 }
+
+export interface PriceInfo { price: number; exact: boolean; supermarketId: string | null; source: string }
 const DataCtx = createContext<DataState>(null as unknown as DataState)
 export const useData = () => useContext(DataCtx)
 
@@ -119,20 +134,23 @@ export function DataProvider({ household, children }: { household: Household; ch
   const [members, setMembers] = useState<Member[]>([])
   const [list, setList] = useState<ListItem[]>([])
   const [statsRows, setStatsRows] = useState<ProductStats[]>([])
+  const [prices, setPrices] = useState<ProductPrice[]>([])
 
   const refresh = useCallback(async () => {
-    const [p, s, m, l, st] = await Promise.all([
+    const [p, s, m, l, st, pr] = await Promise.all([
       supabase.from('products').select('*, product_supermarkets(supermarket_id)').eq('household_id', hid).order('name'),
       supabase.from('supermarkets').select('*').eq('household_id', hid).order('name'),
       supabase.from('members').select('household_id, user_id, display_name').eq('household_id', hid),
       supabase.from('list_items').select('*').eq('household_id', hid).eq('status', 'pending').order('added_at', { ascending: false }),
       supabase.from('product_stats').select('*').eq('household_id', hid),
+      supabase.from('product_prices').select('product_id, supermarket_id, price, source, updated_at, products!inner(household_id)').eq('products.household_id', hid),
     ])
     if (p.data) setProducts(p.data as Product[])
     if (s.data) setSupermarkets(s.data as Supermarket[])
     if (m.data) setMembers(m.data as Member[])
     if (l.data) setList(l.data as ListItem[])
     if (st.data) setStatsRows(st.data as ProductStats[])
+    if (pr.data) setPrices(pr.data as unknown as ProductPrice[])
     setReady(true)
   }, [hid])
 
@@ -150,6 +168,7 @@ export function DataProvider({ household, children }: { household: Household; ch
     for (const table of ['list_items', 'products', 'supermarkets', 'trips']) {
       channel.on('postgres_changes', { event: '*', schema: 'public', table, filter }, scheduleRefresh)
     }
+    channel.on('postgres_changes', { event: '*', schema: 'public', table: 'product_prices' }, scheduleRefresh)
     channel.subscribe()
     // En el móvil la conexión se corta en segundo plano: al volver, recargamos
     const onVisible = () => { if (document.visibilityState === 'visible') scheduleRefresh() }
@@ -166,11 +185,23 @@ export function DataProvider({ household, children }: { household: Household; ch
     const productsById = new Map(products.map((p) => [p.id, p]))
     const stats = new Map(statsRows.map((r) => [r.product_id, r]))
     const names = new Map(members.map((m) => [m.user_id, m.display_name]))
+    const byProduct = new Map<string, ProductPrice[]>()
+    for (const pp of prices) byProduct.set(pp.product_id, [...(byProduct.get(pp.product_id) ?? []), pp])
+    const priceOf = (productId: string, supermarketId: string | null): PriceInfo | null => {
+      const list = byProduct.get(productId) ?? []
+      const exact = supermarketId ? list.find((x) => x.supermarket_id === supermarketId) : undefined
+      if (exact) return { price: Number(exact.price), exact: true, supermarketId, source: exact.source }
+      const latest = [...list].sort((a, b) => b.updated_at.localeCompare(a.updated_at))[0]
+      if (latest) return { price: Number(latest.price), exact: !supermarketId, supermarketId: latest.supermarket_id, source: latest.source }
+      const ref = productsById.get(productId)?.ref_price
+      return ref != null ? { price: Number(ref), exact: false, supermarketId: null, source: 'referencia' } : null
+    }
     return {
       ready, products, productsById, supermarkets, members, list, stats, refresh,
+      priceOf, pricesOf: (id) => byProduct.get(id) ?? [],
       memberName: (id) => (id ? names.get(id) ?? 'Alguien' : 'Alguien'),
     }
-  }, [ready, products, supermarkets, members, list, statsRows, refresh])
+  }, [ready, products, supermarkets, members, list, statsRows, prices, refresh])
 
   return <DataCtx.Provider value={value}>{children}</DataCtx.Provider>
 }

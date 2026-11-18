@@ -1,3 +1,4 @@
+import { Flashlight, FlashlightOff, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { BarcodeDetector as ZXingDetector, prepareZXingModule } from 'barcode-detector/ponyfill'
 import wasmUrl from 'zxing-wasm/reader/zxing_reader.wasm?url'
@@ -120,10 +121,10 @@ export default function BarcodeScanner({ onDetected, onClose, title = 'Escanea e
   return (
     <div className="scanner" role="dialog" aria-modal="true">
       <div className="scanner-top">
-        <button className="icon-btn light" onClick={onClose} aria-label="Cerrar">✕</button>
+        <button className="icon-btn light" onClick={onClose} aria-label="Cerrar"><X /></button>
         <span>{title}</span>
         {torch !== null ? (
-          <button className="icon-btn light" onClick={toggleTorch} aria-label="Linterna">{torch ? '🔦' : '💡'}</button>
+          <button className="icon-btn light" onClick={toggleTorch} aria-label="Linterna">{torch ? <FlashlightOff /> : <Flashlight />}</button>
         ) : <span style={{ width: 44 }} />}
       </div>
       <div className="scanner-view">

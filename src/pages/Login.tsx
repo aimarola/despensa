@@ -1,3 +1,4 @@
+import { ShoppingCart } from 'lucide-react'
 import { useState } from 'react'
 import { errorText, supabase } from '../lib/supabase'
 
@@ -37,9 +38,11 @@ export default function Login() {
 
   return (
     <div className="auth">
-      <div className="auth-logo">🛒</div>
-      <h1>Despensa</h1>
-      <p className="muted">La lista de la compra de toda la familia</p>
+      <div className="auth-hero">
+        <div className="mark"><ShoppingCart size={32} /></div>
+        <h1>Despensa</h1>
+        <p className="muted" style={{ margin: 0 }}>La lista de la compra de toda la familia</p>
+      </div>
 
       <div className="segmented">
         <button className={mode === 'login' ? 'active' : ''} onClick={() => setMode('login')}>Entrar</button>

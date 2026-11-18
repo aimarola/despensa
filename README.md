@@ -18,13 +18,18 @@ Las secciones de abajo explican cómo montarla desde cero, por si algún día ha
 - **Apuntar rápido.** Escribes «lech…», tocas la sugerencia y queda apuntado. Si no está en el catálogo, se crea en ese momento.
 - **Código de barras.** Escaneas con la cámara:
   - si el producto ya está en vuestro catálogo, se apunta directamente;
-  - si es nuevo, la app lo busca en Open Food Facts (alimentación, droguería y cosmética) y rellena nombre, marca y foto.
+  - si es nuevo, la app lo busca en Open Food Facts (alimentación, droguería y cosmética) y rellena nombre, marca, foto y **categoría**;
+  - **asigna el supermercado solo**: por marca propia (Hacendado o Deliplus → Mercadona, Eroski, Milbona → Lidl, Carrefour, Dia…), por el código de barras de la cadena o por las tiendas donde se vende;
+  - **busca el precio** en Open Prices (precios reales que suben los usuarios) para cada supermercado vuestro.
+- **Categorías** (frutas y verduras, panadería, carne, pescado, lácteos, despensa, limpieza, higiene…), en el orden de los pasillos. La lista y el modo compra se agrupan por categoría, y al escribir un nombre se sugiere la categoría.
+- **Precios que se aprenden solos.** Lo que pagáis en cada compra se guarda como precio de ese supermercado, así que la siguiente compra ya sale calculada.
 - **Foto de cada producto.** La haces desde la app con la cámara o la eliges de la galería. Se reduce automáticamente para que pese poco.
 - **Varios supermercados.** Indicas dónde se compra cada producto (Mercadona, Lidl…) y filtras la lista por supermercado. Si un producto no tiene supermercado asignado, aparece en todos.
-- **Modo compra.** Eliges el supermercado, vas marcando lo que coges (puedes cambiar la cantidad) y añades lo que no estaba en la lista. Al pulsar **«He hecho la compra»**:
+- **Modo compra.** Eliges el supermercado y ves solo lo que toca comprar allí, agrupado por pasillo. Al tocar un producto pasa al carro y la lista mengua, con la opción de deshacer. El total se va calculando y la barra **«Finalizar compra»** está siempre a mano. Al finalizar indicas **quién ha ido** y el **total del ticket**:
   - lo comprado sale de la lista y queda registrado;
   - lo que no compraste se queda en la lista para la próxima vez.
   - Si se cierra la web a mitad de la compra, lo que llevabas marcado no se pierde.
+- **Historial con tickets.** Gasto del mes y de los últimos 6 meses, y cada compra con quién fue, el total y el precio de cada producto (se puede corregir después).
 - **Trazabilidad.** De cada producto ves cuántas veces se ha comprado, cuántas unidades en total, cuándo fue la última vez, cada cuántos días se compra de media y su historial completo (fecha, supermercado y quién lo compró). También hay un historial de cada compra y de los productos que más compráis.
 
 ## Cuánto cuesta
@@ -46,7 +51,7 @@ Nada. Todo funciona dentro de los planes gratuitos:
 ### 1. Crear la base de datos en Supabase
 
 1. Crea una cuenta en https://supabase.com y pulsa **New project**. Ponle un nombre (por ejemplo, «despensa»), una contraseña y la región **Europe (Frankfurt o Paris)**.
-2. Cuando esté listo, entra en **SQL Editor → New query**, pega el contenido completo de [`supabase/schema.sql`](supabase/schema.sql) y pulsa **Run**. Debe aparecer «Success».
+2. Cuando esté listo, entra en **SQL Editor → New query**, pega el contenido completo de [`supabase/schema.sql`](supabase/schema.sql) y pulsa **Run**. Debe aparecer «Success». Repite lo mismo con [`supabase/v2_categorias_precios.sql`](supabase/v2_categorias_precios.sql).
 3. Entra en **Project Settings → API** y copia dos valores:
    - **Project URL**, por ejemplo `https://abcdxyz.supabase.co`;
    - la clave **anon / public**. Es pública y puede ir en la web; la seguridad la ponen las reglas de la base de datos.
