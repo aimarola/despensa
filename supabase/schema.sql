@@ -277,6 +277,14 @@ begin
   return tid;
 end $$;
 
+-- Nadie sin sesión puede llamar a las funciones
+revoke execute on function public.create_household(text, text) from public, anon;
+revoke execute on function public.join_household(text, text) from public, anon;
+revoke execute on function public.regenerate_invite_code(uuid) from public, anon;
+revoke execute on function public.is_member(uuid) from public, anon;
+revoke execute on function public.add_to_list(uuid, int, text) from public, anon;
+revoke execute on function public.complete_shopping(uuid, uuid, jsonb, jsonb) from public, anon;
+grant execute on function public.is_member(uuid) to authenticated;
 grant execute on function public.create_household(text, text)          to authenticated;
 grant execute on function public.join_household(text, text)            to authenticated;
 grant execute on function public.regenerate_invite_code(uuid)          to authenticated;
