@@ -2,6 +2,16 @@
 
 Una web app pensada para el móvil (iPhone y Android) que se puede instalar en la pantalla de inicio como si fuera una app normal.
 
+## 🌐 Ya está publicada
+
+**https://aimarola.github.io/despensa/**
+
+- **Web:** se aloja en GitHub Pages. Cada cambio que se sube a `main` se publica solo (`.github/workflows/deploy.yml`).
+- **Base de datos:** el proyecto de Supabase «despensa» (`bbgayvjewrntmhfplqhq`, en Frankfurt) ya tiene cargado el esquema de `supabase/schema.sql`.
+- **Inicio de sesión:** la confirmación por email está desactivada. La dirección principal (Site URL) es la de GitHub Pages.
+
+Las secciones de abajo explican cómo montarla desde cero, por si algún día hay que repetirlo.
+
 ## Qué hace
 
 - **Lista compartida en tiempo real.** Cualquier miembro de la familia apunta lo que falta y los demás lo ven al momento en su móvil.
