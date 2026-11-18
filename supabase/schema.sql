@@ -290,6 +290,11 @@ insert into storage.buckets (id, name, public)
 values ('product-images', 'product-images', true)
 on conflict (id) do nothing;
 
+-- (necesaria también para poder borrar o sustituir fotos desde la app)
+drop policy if exists "fotos: ver" on storage.objects;
+create policy "fotos: ver" on storage.objects for select to authenticated
+  using (bucket_id = 'product-images'
+         and public.is_member(((storage.foldername(name))[1])::uuid));
 drop policy if exists "fotos: subir" on storage.objects;
 create policy "fotos: subir" on storage.objects for insert to authenticated
   with check (bucket_id = 'product-images'
